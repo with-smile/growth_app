@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>身長・体重記録アプリ</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ログイン画面 -->
+    <div id="login-page" class="container">
+        <h1>ログイン</h1>
+        <div class="card">
+            <input type="text" id="username" placeholder="名前を入力" required>
+            <input type="password" id="password" placeholder="パスワードを入力" required>
+            <button id="login-button">ログイン</button>
+            <p id="login-error" class="error-message"></p>
+        </div>
+    </div>
+
+    <!-- メインアプリ画面 (閲覧者用) -->
+    <div id="app" class="container" style="display: none;">
+        <div class="header">
+            <h1 id="welcome-message"></h1>
+            <button id="logout-button">ログアウト</button>
+        </div>
+
+        <!-- データ入力フォーム -->
+        <div class="card">
+            <h2>今日の記録</h2>
+            <label for="record-date">日付</label>
+            <input type="date" id="record-date">
+            <label for="height">身長 (cm)</label>
+            <input type="number" id="height" placeholder="身長 (cm)" step="0.1">
+            <label for="weight">体重 (kg)</label>
+            <input type="number" id="weight" placeholder="体重 (kg)" step="0.1">
+            <button id="save-button">保存する</button>
+        </div>
+
+        <!-- グラフ表示エリア -->
+        <div class="card">
+            <h2>推移グラフ</h2>
+            <canvas id="growth-chart"></canvas>
+        </div>
+
+        <!-- 記録リスト -->
+        <div class="card">
+            <h2>記録リスト</h2>
+            <table id="record-table">
+                <thead>
+                    <tr>
+                        <th>日付</th>
+                        <th>身長 (cm)</th>
+                        <th>体重 (kg)</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="record-table-body">
+                    <!-- JavaScriptによって記録がここに追加されます -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 管理者専用画面 -->
+    <div id="admin-page" class="container" style="display: none;">
+        <div class="header">
+            <h1>管理者ページ</h1>
+            <button id="admin-logout-button">ログアウト</button>
+        </div>
+
+        <!-- ユーザー管理 -->
+        <div class="card admin-controls">
+            <div>
+                <label for="user-select">対象ユーザー</label>
+                <select id="user-select"></select>
+            </div>
+            <div>
+                <label for="new-user-name">新規ユーザー作成</label>
+                <input type="text" id="new-user-name" placeholder="新しい名前">
+                <button id="create-user-button">作成</button>
+            </div>
+            <div>
+                <label>ユーザー操作</label>
+                <button id="delete-user-button" class="danger-button">選択中のユーザーを削除</button>
+            </div>
+        </div>
+
+        <!-- 管理者情報変更 -->
+        <div class="card">
+            <h2>管理者情報</h2>
+            <div class="admin-settings">
+                <div>
+                    <label for="admin-username">管理者ID</label>
+                    <input type="text" id="admin-username">
+                </div>
+                <div>
+                    <label for="admin-password">新しいパスワード</label>
+                    <input type="password" id="admin-password">
+                </div>
+            </div>
+            <button id="save-admin-button">管理者情報を保存</button>
+        </div>
+
+        <!-- データ入力フォーム (管理者用) -->
+        <div class="card">
+            <h2>記録の追加</h2>
+            <label for="admin-record-date">日付</label>
+            <input type="date" id="admin-record-date">
+            <label for="admin-height">身長 (cm)</label>
+            <input type="number" id="admin-height" placeholder="身長 (cm)" step="0.1">
+            <label for="admin-weight">体重 (kg)</label>
+            <input type="number" id="admin-weight" placeholder="体重 (kg)" step="0.1">
+            <button id="admin-save-button">選択中のユーザーに保存</button>
+        </div>
+
+        <!-- グラフ表示エリア (管理者用) -->
+        <div class="card">
+            <h2>推移グラフ</h2>
+            <canvas id="admin-growth-chart"></canvas>
+        </div>
+
+        <!-- 記録リスト (管理者用) -->
+        <div class="card">
+            <h2>記録リスト</h2>
+            <table id="admin-record-table">
+                <thead>
+                    <tr>
+                        <th>日付</th>
+                        <th>身長 (cm)</th>
+                        <th>体重 (kg)</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-record-table-body">
+                    <!-- JavaScriptによって記録がここに追加されます -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Chart.jsライブラリの読み込み -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 自作のJavaScriptファイルの読み込み -->
+    <script src="script.js"></script>
+</body>
+</html>
