@@ -3,9 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- DOM要素の取得 ---
     const loginPage = document.getElementById('login-page');
     const appPage = document.getElementById('app');
-    const adminPage = document.getElementById('admin-page'); // 管理者ページ
+    const adminPage = document.getElementById('admin-page');
     const usernameInput = document.getElementById('username');
-    const passwordInput = document.getElementById('password');
     const loginButton = document.getElementById('login-button');
     const loginError = document.getElementById('login-error');
 
@@ -24,56 +23,49 @@ document.addEventListener('DOMContentLoaded', () => {
     const userSelect = document.getElementById('user-select');
     const newUserNameInput = document.getElementById('new-user-name');
     const createUserButton = document.getElementById('create-user-button');
-    const deleteUserButton = document.getElementById('delete-user-button'); // 追加
+    const renameUserButton = document.getElementById('rename-user-button');
+    const deleteUserButton = document.getElementById('delete-user-button');
     const adminHeightInput = document.getElementById('admin-height');
     const adminWeightInput = document.getElementById('admin-weight');
     const adminDateInput = document.getElementById('admin-record-date');
     const adminSaveButton = document.getElementById('admin-save-button');
     const adminRecordTableBody = document.getElementById('admin-record-table-body');
     const adminGrowthChartCanvas = document.getElementById('admin-growth-chart').getContext('2d');
-    const adminUsernameInput = document.getElementById('admin-username');
-    const adminPasswordInput = document.getElementById('admin-password');
-    const saveAdminButton = document.getElementById('save-admin-button');
+    
+    // --- 定数 ---
+    const ADMIN_USERNAME = 'FC一宮シティ';
 
     let currentUser = null;
     let growthChart = null;
-    let adminGrowthChart = null; // 管理者用グラフ
+    let adminGrowthChart = null;
 
     // --- ログイン処理 ---
     loginButton.addEventListener('click', () => {
         const username = usernameInput.value.trim();
-        const password = passwordInput.value;
 
         if (username === '') {
             loginError.textContent = '名前を入力してください。';
             return;
         }
 
-        // localStorageから管理者情報を取得 (なければデフォルト値)
-        const adminCreds = JSON.parse(localStorage.getItem('adminCredentials')) || { user: 'admin', pass: 'adminpass' };
+        currentUser = username;
 
-        // 管理者ログイン
-        if (username === adminCreds.user && password === adminCreds.pass) {
-            currentUser = 'admin';
-            showAdminPage();
-        }
-        // 閲覧者ログイン
-        else if (password === '001') {
-            // adminCredentialsはユーザーではないので除外
-            const allUsers = Object.keys(localStorage).filter(key => key !== 'adminCredentials');
-            if (allUsers.includes(username)) {
-                currentUser = username;
-                showAppPage();
-            } else {
-                loginError.textContent = 'その名前のユーザーは存在しません。';
+        if (username === ADMIN_USERNAME) {
+            if (!localStorage.getItem(ADMIN_USERNAME)) {
+                localStorage.setItem(ADMIN_USERNAME, JSON.stringify([]));
             }
+            showAdminPage();
         } else {
-            loginError.textContent = 'IDまたはパスワードが正しくありません。';
+            if (!localStorage.getItem(username)) {
+                localStorage.setItem(username, JSON.stringify([]));
+            }
+            showAppPage();
         }
     });
 
     // --- ログアウト処理 ---
     logoutButton.addEventListener('click', showLoginPage);
+    adminLogoutButton.addEventListener('click', showLoginPage);
 
     // --- データ保存処理 ---
     saveButton.addEventListener('click', () => {
@@ -87,12 +79,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const record = { date, height, weight };
-        saveRecord(currentUser, record, null); // 対象ユーザーに保存
+        saveRecord(currentUser, record, null);
 
-        // 再描画
         loadUserRecords(currentUser, recordTableBody, growthChart, growthChartCanvas);
 
-        // 入力欄をクリア
         heightInput.value = '';
         weightInput.value = '';
         dateInput.value = new Date().toISOString().split('T')[0];
@@ -102,10 +92,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function showLoginPage() {
         loginPage.style.display = 'block';
         appPage.style.display = 'none';
-        adminPage.style.display = 'none'; // 管理者ページも非表示
+        adminPage.style.display = 'none';
         usernameInput.value = '';
-        passwordInput.value = '';
         loginError.textContent = '';
+        currentUser = null;
     }
 
     function showAppPage() {
@@ -122,13 +112,11 @@ document.addEventListener('DOMContentLoaded', () => {
         appPage.style.display = 'none';
         adminPage.style.display = 'block';
         adminDateInput.value = new Date().toISOString().split('T')[0];
-        loadAdminCredentials(); // 管理者情報をフォームに表示
         populateUserSelect();
-        // 初期表示として最初のユーザーのデータを読み込む
+        
         if (userSelect.options.length > 0) {
             loadUserRecords(userSelect.value, adminRecordTableBody, adminGrowthChart, adminGrowthChartCanvas);
         } else {
-            // ユーザーがいない場合はクリア
             adminRecordTableBody.innerHTML = '';
             if(adminGrowthChart) adminGrowthChart.destroy();
         }
@@ -158,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let records = getRecords(user);
         records.splice(index, 1);
         saveAllRecords(user, records);
-        if (currentUser === 'admin') {
+        if (currentUser === ADMIN_USERNAME) {
             loadUserRecords(user, adminRecordTableBody, adminGrowthChart, adminGrowthChartCanvas);
         } else {
             loadUserRecords(user, recordTableBody, growthChart, growthChartCanvas);
@@ -172,19 +160,16 @@ document.addEventListener('DOMContentLoaded', () => {
         records.forEach((record, index) => {
             addRecordToTable(user, record, index, tableBody);
         });
-        if (currentUser === 'admin') {
+        if (currentUser === ADMIN_USERNAME) {
             adminGrowthChart = updateChart(user, chartInstance, chartCanvas);
         } else {
             growthChart = updateChart(user, chartInstance, chartCanvas);
         }
     }
 
-    // テーブルに行を追加する関数
     function addRecordToTable(user, record, index, tableBody) {
         const tr = document.createElement('tr');
         tr.dataset.index = index;
-
-        // record.height や record.weight が null の場合は '—' を表示
         const heightDisplay = record.height !== null ? record.height : '—';
         const weightDisplay = record.weight !== null ? record.weight : '—';
 
@@ -198,16 +183,13 @@ document.addEventListener('DOMContentLoaded', () => {
             </td>
         `;
 
-        const editButton = tr.querySelector('.edit-button');
-        const deleteButton = tr.querySelector('.delete-button');
-
-        deleteButton.addEventListener('click', () => {
+        tr.querySelector('.delete-button').addEventListener('click', () => {
             if (confirm(`【${record.date}】の記録を削除しますか？`)) {
                 deleteRecord(user, index);
             }
         });
 
-        editButton.addEventListener('click', () => {
+        tr.querySelector('.edit-button').addEventListener('click', () => {
             switchToEditMode(user, tr, record, index, tableBody);
         });
 
@@ -215,8 +197,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function switchToEditMode(user, tr, record, index, tableBody) {
-        // 編集用の入力欄を持った行のHTMLを作成
-        // record.height や record.weight が null の場合は空文字 '' を value に設定
         const heightValue = record.height !== null ? record.height : '';
         const weightValue = record.weight !== null ? record.weight : '';
 
@@ -229,9 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </td>
         `;
 
-        const saveEditButton = tr.querySelector('.save-edit-button');
-        saveEditButton.addEventListener('click', () => {
-            // クラス名を元に、より確実に要素を取得する
+        tr.querySelector('.save-edit-button').addEventListener('click', () => {
             const newDate = tr.querySelector('.edit-date').value;
             const newHeight = tr.querySelector('.edit-height').value ? parseFloat(tr.querySelector('.edit-height').value) : null;
             const newWeight = tr.querySelector('.edit-weight').value ? parseFloat(tr.querySelector('.edit-weight').value) : null;
@@ -244,8 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const updatedRecord = { date: newDate, height: newHeight, weight: newWeight };
             saveRecord(user, updatedRecord, index);
             
-            // 現在のページに応じて再描画
-            if (currentUser === 'admin') {
+            if (currentUser === ADMIN_USERNAME) {
                 loadUserRecords(user, adminRecordTableBody, adminGrowthChart, adminGrowthChartCanvas);
             } else {
                 loadUserRecords(user, recordTableBody, growthChart, growthChartCanvas);
@@ -255,7 +232,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- グラフの更新 (汎用化) ---
     function updateChart(user, chartInstance, chartCanvas) {
-        const records = getRecords(user);
+        const records = getRecords(user); // Records are already sorted by date
+
         const labels = records.map(r => r.date);
         const heightData = records.map(r => r.height);
         const weightData = records.map(r => r.weight);
@@ -275,7 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         borderColor: 'rgba(54, 162, 235, 1)',
                         backgroundColor: 'rgba(54, 162, 235, 0.2)',
                         yAxisID: 'y-axis-height',
-                        fill: false,
+                        spanGaps: true, // nullデータを飛び越えて線を描画
                         tension: 0.1
                     },
                     {
@@ -284,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         borderColor: 'rgba(255, 99, 132, 1)',
                         backgroundColor: 'rgba(255, 99, 132, 0.2)',
                         yAxisID: 'y-axis-weight',
-                        fill: false,
+                        spanGaps: true, // nullデータを飛び越えて線を描画
                         tension: 0.1
                     }
                 ]
@@ -292,13 +270,21 @@ document.addEventListener('DOMContentLoaded', () => {
             options: {
                 responsive: true,
                 scales: {
+                    x: {
+                        type: 'category',
+                        title: {
+                            display: true,
+                            text: '日付'
+                        }
+                    },
                     'y-axis-height': {
                         type: 'linear',
                         position: 'left',
                         title: {
                             display: true,
                             text: '身長 (cm)'
-                        }
+                        },
+                        beginAtZero: false
                     },
                     'y-axis-weight': {
                         type: 'linear',
@@ -309,7 +295,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         },
                         grid: {
                             drawOnChartArea: false
-                        }
+                        },
+                        beginAtZero: false
                     }
                 }
             }
@@ -319,38 +306,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 管理者ページ専用の関数 ---
 
-    // 管理者情報をフォームに表示
-    function loadAdminCredentials() {
-        const adminCreds = JSON.parse(localStorage.getItem('adminCredentials')) || { user: 'admin', pass: '' };
-        adminUsernameInput.value = adminCreds.user;
-        adminPasswordInput.value = ''; // パスワードは表示しない
-    }
-
-    // 管理者情報を保存
-    saveAdminButton.addEventListener('click', () => {
-        const newAdminUser = adminUsernameInput.value.trim();
-        const newAdminPass = adminPasswordInput.value.trim();
-
-        if (!newAdminUser) {
-            alert('管理者IDは空にできません。');
-            return;
-        }
-
-        const currentCreds = JSON.parse(localStorage.getItem('adminCredentials')) || { user: 'admin', pass: 'adminpass' };
-        
-        // パスワードが入力されている場合のみ更新
-        const finalPass = newAdminPass ? newAdminPass : currentCreds.pass;
-
-        const newCreds = { user: newAdminUser, pass: finalPass };
-        localStorage.setItem('adminCredentials', JSON.stringify(newCreds));
-        alert('管理者情報を更新しました。');
-        adminPasswordInput.value = '';
-    });
-
-    // ユーザー選択ドロップダウンを生成
     function populateUserSelect() {
         userSelect.innerHTML = '';
-        const allUsers = Object.keys(localStorage).filter(key => key !== 'adminCredentials'); // 管理者情報は除外
+        const allUsers = Object.keys(localStorage).filter(key => key !== ADMIN_USERNAME);
         allUsers.forEach(user => {
             const option = document.createElement('option');
             option.value = user;
@@ -359,24 +317,61 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 新規ユーザー作成
     createUserButton.addEventListener('click', () => {
         const newUserName = newUserNameInput.value.trim();
-        if (newUserName && newUserName !== 'admin' && !localStorage.getItem(newUserName)) {
-            localStorage.setItem(newUserName, JSON.stringify([])); // 空のデータで作成
+        if (newUserName && newUserName !== ADMIN_USERNAME && !localStorage.getItem(newUserName)) {
+            localStorage.setItem(newUserName, JSON.stringify([]));
             newUserNameInput.value = '';
             populateUserSelect();
-            // 作成したユーザーを選択状態にする
             userSelect.value = newUserName;
             loadUserRecords(newUserName, adminRecordTableBody, adminGrowthChart, adminGrowthChartCanvas);
         } else if (localStorage.getItem(newUserName)) {
             alert('その名前のユーザーは既に存在します。');
+        } else if (newUserName === ADMIN_USERNAME) {
+            alert('その名前は管理者用のため使用できません。');
         } else {
             alert('有効な名前を入力してください。');
         }
     });
 
-    // 選択中のユーザーを削除
+    renameUserButton.addEventListener('click', () => {
+        const oldUsername = userSelect.value;
+        if (!oldUsername) {
+            alert('名前を変更するユーザーを選択してください。');
+            return;
+        }
+
+        const newUsername = prompt(`「${oldUsername}」の新しい名前を入力してください:`);
+
+        if (!newUsername || newUsername.trim() === '') {
+            alert('新しい名前を入力してください。');
+            return;
+        }
+
+        const trimmedNewUsername = newUsername.trim();
+
+        if (trimmedNewUsername === ADMIN_USERNAME) {
+            alert('その名前は管理者用のため使用できません。');
+            return;
+        }
+
+        if (localStorage.getItem(trimmedNewUsername)) {
+            alert('その名前のユーザーは既に存在します。');
+            return;
+        }
+
+        const records = localStorage.getItem(oldUsername);
+        localStorage.setItem(trimmedNewUsername, records);
+        localStorage.removeItem(oldUsername);
+
+        alert(`ユーザー「${oldUsername}」の名前を「${trimmedNewUsername}」に変更しました。`);
+        
+        // ユーザー選択プルダウンを更新
+        populateUserSelect();
+        userSelect.value = trimmedNewUsername; // 新しい名前を選択状態にする
+        loadUserRecords(trimmedNewUsername, adminRecordTableBody, adminGrowthChart, adminGrowthChartCanvas);
+    });
+
     deleteUserButton.addEventListener('click', () => {
         const selectedUser = userSelect.value;
         if (!selectedUser) {
@@ -384,17 +379,23 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        if (selectedUser === ADMIN_USERNAME) {
+            alert('管理者は削除できません。');
+            return;
+        }
+
         if (confirm(`本当にユーザー「${selectedUser}」を削除しますか？\nこの操作は元に戻せません。`)) {
             localStorage.removeItem(selectedUser);
             alert(`ユーザー「${selectedUser}」を削除しました。`);
-            // 管理者ページを再初期化して、ユーザーリストと表示を更新
             showAdminPage();
         }
     });
 
     userSelect.addEventListener('change', () => {
         const selectedUser = userSelect.value;
-        loadUserRecords(selectedUser, adminRecordTableBody, adminGrowthChart, adminGrowthChartCanvas);
+        if (selectedUser) {
+            loadUserRecords(selectedUser, adminRecordTableBody, adminGrowthChart, adminGrowthChartCanvas);
+        }
     });
 
     adminSaveButton.addEventListener('click', () => {
@@ -420,8 +421,6 @@ document.addEventListener('DOMContentLoaded', () => {
         adminWeightInput.value = '';
         adminDateInput.value = new Date().toISOString().split('T')[0];
     });
-
-    adminLogoutButton.addEventListener('click', showLoginPage);
 
     // --- 初期表示 ---
     showLoginPage();

@@ -13,7 +13,6 @@
         <h1>ログイン</h1>
         <div class="card">
             <input type="text" id="username" placeholder="名前を入力" required>
-            <input type="password" id="password" placeholder="パスワードを入力" required>
             <button id="login-button">ログイン</button>
             <p id="login-error" class="error-message"></p>
         </div>
@@ -23,7 +22,9 @@
     <div id="app" class="container" style="display: none;">
         <div class="header">
             <h1 id="welcome-message"></h1>
-            <button id="logout-button">ログアウト</button>
+            <div>
+                <button id="logout-button">ログアウト</button>
+            </div>
         </div>
 
         <!-- データ入力フォーム -->
@@ -83,25 +84,12 @@
             </div>
             <div>
                 <label>ユーザー操作</label>
+                <button id="rename-user-button">名前を変更</button>
                 <button id="delete-user-button" class="danger-button">選択中のユーザーを削除</button>
             </div>
         </div>
 
-        <!-- 管理者情報変更 -->
-        <div class="card">
-            <h2>管理者情報</h2>
-            <div class="admin-settings">
-                <div>
-                    <label for="admin-username">管理者ID</label>
-                    <input type="text" id="admin-username">
-                </div>
-                <div>
-                    <label for="admin-password">新しいパスワード</label>
-                    <input type="password" id="admin-password">
-                </div>
-            </div>
-            <button id="save-admin-button">管理者情報を保存</button>
-        </div>
+        
 
         <!-- データ入力フォーム (管理者用) -->
         <div class="card">
