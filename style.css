@@ -45,7 +45,6 @@ h1 {
 
 /* 入力フォーム */
 input[type="text"],
-input[type="password"],
 input[type="number"],
 input[type="date"] {
     width: calc(100% - 20px);
